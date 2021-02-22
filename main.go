@@ -87,6 +87,11 @@ func main() {
 	}
 	viper.Set(types.AllowedAnnotationsMap, allowedAnnotations)
 
+	ctrlUtils := &controllers.Utils{
+		AllowedAnnotations: viper.GetStringSlice(types.AllowedAnnotations),
+		CurrentNsPolicy:    types.ListPolicy(viper.GetString(types.NamespaceListPolicy)),
+	}
+
 	// Create a handler for gcp service directory
 	credsPath := "./credentials/gcloud-credentials.json"
 	sdHandler, err := sd.NewHandler(ctx, viper.GetString(types.SDProject), viper.GetString(types.SDDefaultRegion), credsPath, 30)
@@ -120,6 +125,7 @@ func main() {
 		Log:           ctrl.Log.WithName("controllers").WithName("Service"),
 		Scheme:        mgr.GetScheme(),
 		ServRegBroker: srBroker,
+		Utils:         ctrlUtils,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Service")
 		os.Exit(1)
@@ -129,6 +135,7 @@ func main() {
 		Log:           ctrl.Log.WithName("controllers").WithName("Namespace"),
 		Scheme:        mgr.GetScheme(),
 		ServRegBroker: srBroker,
+		Utils:         ctrlUtils,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Namespace")
 		os.Exit(1)
