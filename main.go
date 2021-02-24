@@ -121,7 +121,7 @@ func main() {
 		AllowedAnnotations: allowedAnnotations,
 		CurrentNsPolicy:    types.ListPolicy(viper.GetString(types.NamespaceListPolicy)),
 		Client:             mgr.GetClient(),
-		Log:                ctrl.Log.WithName("controllers").WithName("Namespace"),
+		Log:                ctrl.Log.WithName("controllers"),
 		Scheme:             mgr.GetScheme(),
 		ServRegBroker:      srBroker,
 	}
