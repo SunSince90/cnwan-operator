@@ -17,7 +17,7 @@
 package controllers
 
 import (
-	"context"
+	"fmt"
 	"sync"
 
 	"k8s.io/api/discovery/v1beta1"
@@ -52,10 +52,32 @@ type EndpointSliceReconciler struct {
 
 // Reconcile keeps track counts in the endpointslice length
 func (r *EndpointSliceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	_ = context.Background()
-	_ = r.Log.WithName("EndpointSliceReconciler").WithValues("endpointslice", req.NamespacedName)
+	l := r.Log.WithName("EndpointSliceReconciler").WithValues("endpointslice", req.NamespacedName)
+	namespacedName := req.NamespacedName.String()
+	data := func(nname string) *epsData {
+		r.lock.Lock()
+		defer r.lock.Unlock()
+		defer delete(r.epsDataActions, nname)
 
-	// TODO: implement me
+		return r.epsDataActions[nname]
+	}(namespacedName)
+	if data == nil {
+		l.Error(fmt.Errorf("no data exists"), "could not get endpointslice data for this endpointslice")
+		return ctrl.Result{}, nil
+	}
+
+	srvName := ktypes.NamespacedName{Namespace: req.Namespace, Name: data.srv}.String()
+	if _, exists := r.srvCounts[srvName]; !exists {
+		r.srvCounts[srvName] = map[string]int{}
+	}
+	r.srvCounts[srvName][req.Name] = data.count
+
+	totalCount := 0
+	for _, c := range r.srvCounts[srvName] {
+		totalCount += c
+	}
+
+	// TODO: do something with the total count
 
 	return ctrl.Result{}, nil
 }
